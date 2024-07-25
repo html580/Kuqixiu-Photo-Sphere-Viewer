@@ -17,6 +17,7 @@
             {
                 "imports": {
                     "three": "/node_modules/three/build/three.module.js",
+                    "three/addons/": "/node_modules/three/examples/jsm/",
                     "randomcolor": "https://cdn.jsdelivr.net/npm/randomcolor/+esm",
                     "@photo-sphere-viewer/core": "/dist/core/index.module.js",
                     "@photo-sphere-viewer/map-plugin": "/dist/map-plugin/index.module.js",
@@ -26,6 +27,7 @@
         </script>
 
         <script type="module">
+            import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
             import { Viewer } from '@photo-sphere-viewer/core';
             import randomColor from 'randomcolor';
             import { MapPlugin } from '@photo-sphere-viewer/map-plugin';
@@ -125,8 +127,12 @@
 
                 if (view === 'maximized') {
                     map.setZoom(100);
+                    gui.hide();
                 } else if (view === 'normal') {
                     map.setZoom(40);
+                    gui.show();
+                } else {
+                    gui.show();
                 }
             });
 
@@ -155,6 +161,57 @@
             }
 
             window.viewer = viewer;
+
+            const gui = new GUI({ title: 'Options' });
+
+            const config = {
+                // display
+                shape: map.config.shape,
+                size: map.config.size,
+                position: map.config.position.join(' '),
+                static: map.config.static,
+                minZoom: Math.round(Math.exp(map.config.minZoom) * 100),
+                maxZoom: Math.round(Math.exp(map.config.maxZoom) * 100),
+                overlayImage: map.config.overlayImage === null ? 'none' : 'default',
+
+                // pin
+                pinSize: map.config.pinSize,
+                coneColor: map.config.coneColor,
+                coneSize: map.config.coneSize,
+
+                // panorama
+                center: { ...map.config.center, },
+                rotation: map.config.rotation / Math.PI * 180,
+            };
+
+            const display = gui.addFolder('Display');
+            display.add(config, 'shape', ['round', 'square']);
+            display.add(config, 'size');
+            display.add(config, 'position', ['top left', 'top right', 'bottom left', 'bottom right']);
+            display.add(config, 'minZoom', 10, 100, 1);
+            display.add(config, 'maxZoom', 10, 400, 1);
+            display.add(config, 'static');
+            display.add(config, 'overlayImage', ['default', 'none']);
+
+            const pin = gui.addFolder('Pin');
+            pin.add(config, 'pinSize', 5, 100, 1);
+            pin.addColor(config, 'coneColor');
+            pin.add(config, 'coneSize', 5, 100, 1);
+
+            const panorama = gui.addFolder('Panorama');
+            panorama.add(config.center, 'x', 0, 1600, 1).name('center.x');
+            panorama.add(config.center, 'y', 0, 1200, 1).name('center.y');
+            panorama.add(config, 'rotation', 0, 360, 1);
+
+            gui.onChange(() => {
+                map.setOptions({
+                    ...config,
+                    rotation: config.rotation + 'deg',
+                    overlayImage: config.overlayImage === 'default' ? undefined : null,
+                });
+
+                document.querySelector('.lil-gui').style.right = (config.position === 'top right') ? 'auto' : '';
+            });
         </script>
     </body>
 </html>

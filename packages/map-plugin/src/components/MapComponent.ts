@@ -312,6 +312,9 @@ export class MapComponent extends AbstractComponent {
             this.compassButton?.rotate(0);
             this.overlay.style.transform = '';
         }
+        if (this.config.shape === 'square') {
+            this.overlay.style.transform = '';
+        }
 
         this.update();
     }
